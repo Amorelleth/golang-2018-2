@@ -19,8 +19,11 @@
 * https://www.devdungeon.com/content/working-files-go - работа с файлами
 * http://www.golangprograms.com - много how-to касательно базовых вещей в go
 * http://yourbasic.org/golang/ - ещё большой набор how-to где можно получить углублённую информацию по всем базовым вещам. очень полезны http://yourbasic.org/golang/blueprint/
+* https://go101.org/article/101.html - похожий на предыдущий сайт с кучей информации по основам и основным местам
 * https://github.com/Workiva/go-datastructures
 * https://github.com/enocom/gopher-reading-list - большая подборка статей по многим темам ( не только данной лекции )
+* https://www.youtube.com/watch?v=MzTcsI6tn-0 - как организовать код
+* https://medium.com/@benbjohnson/standard-package-layout-7cdbc8391fc1 - статья на предыдущую тему
 
 Материалы для дополнительного чтения на русском:
 * https://habrahabr.ru/company/mailru/blog/314804/ - 50 оттенков го. обязательно к прочтению. многое оттуда мы ещё не проходили, но на будущее - имейте ввиду
