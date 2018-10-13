@@ -109,25 +109,22 @@ func (u *User) changeRoom(room string) string {
 }
 
 func (k *Kitchen) lookAround() string {
-	return k.Description + ", " +
-		func() string {
-			if len(k.OnTable) != 0 {
-				return "на столе: " + strings.Join(k.OnTable, ", ") + ", "
+	res := k.Description + ", "
+
+	if len(k.OnTable) != 0 {
+		res += "на столе: " + strings.Join(k.OnTable, ", ") + ", "
+	}
+
+	if len(k.Tasks) != 0 {
+		for idx, item := range k.Tasks {
+			if tasksList[item].complited() == true {
+				k.Tasks = append(k.Tasks[:idx], k.Tasks[idx+1:]...)
 			}
-			return ""
-		}() +
-		func() string {
-			if len(k.Tasks) != 0 {
-				for idx, item := range k.Tasks {
-					if tasksList[item].complited() == true {
-						k.Tasks = append(k.Tasks[:idx], k.Tasks[idx+1:]...)
-					}
-				}
-				return "надо " + strings.Join(k.Tasks, " и ") + ". "
-			}
-			return ""
-		}() +
-		"можно пройти - " + strings.Join(k.RoomsAvailable, ", ")
+		}
+		res += "надо " + strings.Join(k.Tasks, " и ") + ". "
+	}
+
+	return res + "можно пройти - " + strings.Join(k.RoomsAvailable, ", ")
 }
 
 func (b *Bedroom) lookAround() string {
