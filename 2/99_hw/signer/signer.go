@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-const TH_NUM = 6
+const th = 6
 
 func CalculateCrc32Hash(val string, ch chan string) {
 	res := DataSignerCrc32(val)
@@ -29,20 +29,20 @@ func CalculateSingleHash(val string, vMd5 string, out chan interface{}, wg *sync
 	out <- hash1 + "~" + hash2
 }
 
-func CalculateMultiHashByIdx(v string, arr []string, index int, wg *sync.WaitGroup) {
+func CalculateMultiHashByIdx(v string, hashArr []string, idx int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	hash := DataSignerCrc32(v)
-	arr[index] = hash
+	hashArr[idx] = hash
 }
 
 func CalculateMultiHash(val interface{}, out chan interface{}, wg *sync.WaitGroup) {
-	res := make([]string, TH_NUM)
+	res := make([]string, th)
 	wgInner := &sync.WaitGroup{}
 
 	defer wg.Done()
 
-	for i := 0; i < TH_NUM; i++ {
+	for i := 0; i < th; i++ {
 		wgInner.Add(1)
 		v := strconv.Itoa(i) + val.(string)
 
