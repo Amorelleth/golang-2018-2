@@ -3,14 +3,16 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
-	"gopkg.in/telegram-bot-api.v4"
 	"io/ioutil"
 	"net/http"
+	"os"
+
+	"gopkg.in/telegram-bot-api.v4"
 )
 
 const (
-	BotToken   = "310805560:AAENzjDSJPKABY9Hw1GZOdKBxxrhOHkfo_k"
-	WebhookURL = "https://ea731f5c.ngrok.io"
+	BotToken   = "780686583:AAFNe68VRVIvWW9h10u_3VxG8zoJWbom__A"
+	WebhookURL = "https://msu-sphere-bot-2k18.herokuapp.com/"
 )
 
 var rss = map[string]string{
@@ -60,7 +62,8 @@ func main() {
 
 	updates := bot.ListenForWebhook("/")
 
-	go http.ListenAndServe(":8080", nil)
+	port := os.Getenv("PORT")
+	go http.ListenAndServe(":"+port, nil)
 	fmt.Println("start listen :8080")
 
 	// получаем все обновления из канала updates

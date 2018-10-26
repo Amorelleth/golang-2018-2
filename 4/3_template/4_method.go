@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strings"
 )
 
 type User struct {
@@ -12,11 +13,18 @@ type User struct {
 	Active bool
 }
 
-func (u *User) PrintActive() string {
+func (u *User) PrintActive(uppercase bool) string {
 	if !u.Active {
 		return ""
 	}
-	return "method says user " + u.Name + " active"
+
+	output := "method says user " + u.Name + " active"
+
+	if uppercase {
+		return strings.ToUpper(output)
+	}
+
+	return output
 }
 
 func main() {

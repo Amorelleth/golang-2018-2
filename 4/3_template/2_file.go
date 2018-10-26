@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
+	"text/template"
 )
 
 type User struct {
@@ -17,7 +17,7 @@ func main() {
 
 	users := []User{
 		User{1, "Vasily", true},
-		User{2, "<i>Ivan</i>", false},
+		User{2, "<script>alert(document.cookie)</script>", false},
 		User{3, "Dmitry", true},
 	}
 
