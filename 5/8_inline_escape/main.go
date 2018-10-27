@@ -10,7 +10,7 @@ import (
 */
 
 type User struct {
-	ID int
+	ID    int
 	Login string
 }
 
@@ -18,15 +18,17 @@ func (u *User) GetID() int {
 	return u.ID
 }
 
+var test = ""
+
 func newUser(login string) *User {
 	return &User{123, login}
 }
 
 func setToZero(in *int) {
-	// for i := 0; i<3; i++ {
-	// 	*in = 1
-	// }
-	*in = 0
+	for i := 0; i < 3; i++ {
+		*in = 1
+	}
+	// *in = 0
 }
 
 func main() {
