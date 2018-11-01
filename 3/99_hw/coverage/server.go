@@ -6,15 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	// "time"
 	"sort"
 	"strconv"
 	"strings"
-)
-
-var (
-	DATA_SOURCE  = "dataset.xml"
-	ACCESS_TOKEN = "kek-token"
 )
 
 type XMLUser struct {
@@ -64,7 +58,6 @@ func (s *XMLUserSorter) Less(i, j int) bool {
 
 func (u *XMLUsers) FilterUsers(str string, limit int, offset int) {
 	offsetCounter := offset
-
 	newUsers := make([]XMLUser, 0, len(u.Users))
 
 	for _, user := range u.Users {
@@ -121,7 +114,7 @@ func (s *XMLUsers) SortUsers(orderField string, orderBy int) error {
 			return nil
 		}
 		By(age).Sort(s.Users)
-	default:		
+	default:
 		return fmt.Errorf("ErrorBadOrderField")
 	}
 
@@ -129,13 +122,7 @@ func (s *XMLUsers) SortUsers(orderField string, orderBy int) error {
 }
 
 func getData(src string, xmlParsed *XMLUsers, w *http.ResponseWriter) {
-	file, err := ioutil.ReadFile(src)
-
-	if err != nil {
-		http.Error(*w, err.Error(), 500)
-		return
-	}
-
+	file, _ := ioutil.ReadFile(src)
 	xml.Unmarshal(file, &xmlParsed)
 
 	for idx, _ := range xmlParsed.Users {
@@ -143,56 +130,46 @@ func getData(src string, xmlParsed *XMLUsers, w *http.ResponseWriter) {
 	}
 }
 
-func SearchServer(w http.ResponseWriter, r *http.Request) {
-	var xmlData XMLUsers
-
-	q := r.URL.Query()
-
-	token := r.Header.Get("Accesstoken")
-	query := q.Get("query")
-	orderBy, _ := strconv.Atoi(q.Get("order_by"))
-	offset, _ := strconv.Atoi(q.Get("offset"))
-	limit, _ := strconv.Atoi(q.Get("limit"))
-	orderField := q.Get("order_field")
-
-	if token != "kek-token" {
-		http.Error(w, http.StatusText(401), 401)
-		return
-	}
-
-	getData(DATA_SOURCE, &xmlData, &w)
-
-	xmlData.FilterUsers(query, limit, offset)
-	err := xmlData.SortUsers(orderField, orderBy)
-
-	if err != nil {
-		errResp := SearchErrorResponse{err.Error()}
-		errRespJson, _ := json.Marshal(errResp)
-		w.WriteHeader(http.StatusBadRequest)		
-		w.Write(errRespJson)
-		return
-	}
-
-	// fmt.Println(xmlData)
-	result, _ := json.Marshal(xmlData.Users)
-	// fmt.Println(string(result))
-
-	w.Write(result)
-	// w.WriteHeader(http.StatusInternalServerError)
+type SearchServer struct {
+	DataSource string
+	AccessToken string
 }
 
-// func main() {
-// 	mux := http.NewServeMux()
-// 	// mux.HandleFunc("/test", SearchServer)
-// 	mux.HandleFunc("/", SearchServer)
+type SearchServerInterface interface {
+	Search() func(w http.ResponseWriter, r *http.Request)
+}
 
-// 	server := http.Server{
-// 		Addr:         "localhost:8080",
-// 		Handler:      mux,
-// 		ReadTimeout:  10 * time.Second,
-// 		WriteTimeout: 10 * time.Second,
-// 	}
+func (srv *SearchServer) Search() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var xmlData XMLUsers
 
-// 	fmt.Println("starting server at :8080")
-// 	server.ListenAndServe()
-// }
+		q := r.URL.Query()
+	
+		token := r.Header.Get("Accesstoken")
+		query := q.Get("query")
+		orderBy, _ := strconv.Atoi(q.Get("order_by"))
+		offset, _ := strconv.Atoi(q.Get("offset"))
+		limit, _ := strconv.Atoi(q.Get("limit"))
+		orderField := q.Get("order_field")
+	
+		if token != srv.AccessToken {
+			http.Error(w, http.StatusText(401), 401)
+			return
+		}
+	
+		getData(srv.DataSource, &xmlData, &w)
+		xmlData.FilterUsers(query, limit, offset)
+		err := xmlData.SortUsers(orderField, orderBy)
+	
+		if err != nil {
+			errResp := SearchErrorResponse{err.Error()}
+			errRespJson, _ := json.Marshal(errResp)
+	
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write(errRespJson)
+			return
+		}
+		result, _ := json.Marshal(xmlData.Users)
+		w.Write(result)
+	}
+}

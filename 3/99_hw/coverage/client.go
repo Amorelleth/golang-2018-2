@@ -67,7 +67,7 @@ type SearchClient struct {
 func (srv *SearchClient) FindUsers(req SearchRequest) (*SearchResponse, error) {
 
 	searcherParams := url.Values{}
-
+	fmt.Println(req.Limit)
 	if req.Limit < 0 {
 		return nil, fmt.Errorf("limit must be > 0")
 	}
@@ -89,7 +89,7 @@ func (srv *SearchClient) FindUsers(req SearchRequest) (*SearchResponse, error) {
 
 	searcherReq, err := http.NewRequest("GET", srv.URL+"?"+searcherParams.Encode(), nil)
 	searcherReq.Header.Add("AccessToken", srv.AccessToken)
-	
+
 	resp, err := client.Do(searcherReq)
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
@@ -108,6 +108,7 @@ func (srv *SearchClient) FindUsers(req SearchRequest) (*SearchResponse, error) {
 	case http.StatusBadRequest:
 		errResp := SearchErrorResponse{}
 		err = json.Unmarshal(body, &errResp)
+		fmt.Println("\\\\\\\\", errResp)
 		if err != nil {
 			return nil, fmt.Errorf("cant unpack error json: %s", err)
 		}
@@ -119,17 +120,24 @@ func (srv *SearchClient) FindUsers(req SearchRequest) (*SearchResponse, error) {
 
 	data := []User{}
 	err = json.Unmarshal(body, &data)
+
+	// fmt.Println(data)
+
 	if err != nil {
 		return nil, fmt.Errorf("cant unpack result json: %s", err)
 	}
 
 	result := SearchResponse{}
+
+	fmt.Println("----", len(data), req.Limit)
 	if len(data) == req.Limit {
 		result.NextPage = true
 		result.Users = data[0 : len(data)-1]
 	} else {
 		result.Users = data[0:len(data)]
 	}
+
+	// fmt.Println(result)
 
 	return &result, err
 }
