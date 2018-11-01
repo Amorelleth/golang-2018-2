@@ -7,14 +7,15 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	// "time"
 	"sort"
 	"strconv"
 	"strings"
 )
 
-const (
-	DATA_SOURCE         = "dataset.xml"
-	DEFAULT_ORDER_FIELD = "name"
+var (
+	DATA_SOURCE  = "dataset.xml"
+	ACCESS_TOKEN = "kek-token"
 )
 
 type XMLUser struct {
@@ -62,20 +63,9 @@ func (s *XMLUserSorter) Less(i, j int) bool {
 	return s.by(&s.XMLUsers[i], &s.XMLUsers[j])
 }
 
-// const (
-// 	OrderByAsc  = -1
-// 	OrderByAsIs = 0
-// 	OrderByDesc = 1
-
-// 	ErrorBadOrderField = `OrderField invalid`
-// )
-
 func (u *XMLUsers) FilterUsers(str string, limit int, offset int) {
 	offsetCounter := offset
-
 	newUsers := make([]XMLUser, 0, len(u.Users))
-
-	// fmt.Println(len(u.Users))
 
 	for _, user := range u.Users {
 		if strings.Contains(user.Name, str) || strings.Contains(user.About, str) {
@@ -90,8 +80,8 @@ func (u *XMLUsers) FilterUsers(str string, limit int, offset int) {
 }
 
 func (s *XMLUsers) SortUsers(orderField string, orderBy int) error {
-	if orderBy == OrderByAsIs {
-		return nil
+	if orderBy != OrderByAsc && orderBy != OrderByDesc && orderBy != OrderByAsIs {
+		return fmt.Errorf("ErrorBadOrder")
 	}
 
 	name := func(u1, u2 *XMLUser) bool {
@@ -117,20 +107,35 @@ func (s *XMLUsers) SortUsers(orderField string, orderBy int) error {
 
 	switch orderField {
 	case "Name", "name", "":
+		if orderBy == OrderByAsIs {
+			return nil
+		}
 		By(name).Sort(s.Users)
 	case "Id", "id":
+		if orderBy == OrderByAsIs {
+			return nil
+		}
 		By(id).Sort(s.Users)
 	case "Age", "age":
+		if orderBy == OrderByAsIs {
+			return nil
+		}
 		By(age).Sort(s.Users)
 	default:
-		fmt.Errorf("some error")
+		return fmt.Errorf("ErrorBadOrderField")
 	}
 
 	return nil
 }
 
-func getData(src string, xmlParsed *XMLUsers) {
-	file, _ := ioutil.ReadFile(src)
+func getData(src string, xmlParsed *XMLUsers, w *http.ResponseWriter) {
+	file, err := ioutil.ReadFile(src)
+
+	if err != nil {
+		http.Error(*w, err.Error(), 500)
+		return
+	}
+
 	xml.Unmarshal(file, &xmlParsed)
 
 	for idx, _ := range xmlParsed.Users {
@@ -138,49 +143,40 @@ func getData(src string, xmlParsed *XMLUsers) {
 	}
 }
 
+// type SearchServer struct {
+// 	DataSource string
+// 	Server     func(w http.ResponseWriter, r *http.Request)
+// }
+
 func SearchServer(w http.ResponseWriter, r *http.Request) {
 	var xmlData XMLUsers
 
 	q := r.URL.Query()
 
-	token := r.Header["Accesstoken"][0]
-
-	query := q["query"][0]                       //
-	orderBy, _ := strconv.Atoi(q["order_by"][0]) //
-	offset, _ := strconv.Atoi(q["offset"][0])
-	limit, _ := strconv.Atoi(q["limit"][0])
-	orderField := q["order_field"][0] //
+	token := r.Header.Get("Accesstoken")
+	query := q.Get("query")
+	orderBy, _ := strconv.Atoi(q.Get("order_by"))
+	offset, _ := strconv.Atoi(q.Get("offset"))
+	limit, _ := strconv.Atoi(q.Get("limit"))
+	orderField := q.Get("order_field")
 
 	if token != "kek-token" {
-		w.WriteHeader(http.StatusUnauthorized)
+		http.Error(w, http.StatusText(401), 401)
+		return
 	}
 
-	getData(DATA_SOURCE, &xmlData)
-
+	getData(DATA_SOURCE, &xmlData, &w)
 	xmlData.FilterUsers(query, limit, offset)
-	xmlData.SortUsers(orderField, orderBy)
+	err := xmlData.SortUsers(orderField, orderBy)
 
-	// fmt.Println(xmlData)
+	if err != nil {
+		errResp := SearchErrorResponse{err.Error()}
+		errRespJson, _ := json.Marshal(errResp)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(errRespJson)
+		return
+	}
 
 	result, _ := json.Marshal(xmlData.Users)
-	fmt.Println(string(result))
-
 	w.Write(result)
-	// w.WriteHeader(http.StatusInternalServerError)
 }
-
-// func main() {
-// 	mux := http.NewServeMux()
-// 	// mux.HandleFunc("/test", SearchServer)
-// 	mux.HandleFunc("/", SearchServer)
-
-// 	server := http.Server{
-// 		Addr:         "localhost:8080",
-// 		Handler:      mux,
-// 		ReadTimeout:  10 * time.Second,
-// 		WriteTimeout: 10 * time.Second,
-// 	}
-
-// 	fmt.Println("starting server at :8080")
-// 	server.ListenAndServe()
-// }
