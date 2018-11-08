@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-type TestCase struct {
-	SearchRequest
-	Expected SearchResponse
-}
+var (
+	DATA_SOURCE  = "dataset.xml"
+	ACCESS_TOKEN = "token"
+)
 
 func CheckExpectedError(t *testing.T, err error) {
 	if err == nil {
@@ -25,9 +25,18 @@ func CheckUnexpectedError(t *testing.T, err error) {
 	}
 }
 
-func ServerBadJson(w http.ResponseWriter, r *http.Request) {
+func ServerBrokenErrorJson(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusBadRequest)
+	io.WriteString(w, `"Json: "Bad Json"`)
+}
+
+func ServerBrokenResultJson(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	io.WriteString(w, `"Json": "Bad Json"`)
+	io.WriteString(w, `Json: "Bad Json"`)
+}
+
+func ServerInternalError(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusInternalServerError)
 }
 
 func ServerTimeout(w http.ResponseWriter, r *http.Request) {
@@ -36,91 +45,87 @@ func ServerTimeout(w http.ResponseWriter, r *http.Request) {
 
 func ServerUnknownError(w http.ResponseWriter, r *http.Request) {}
 
-func TestNegativeParams(t *testing.T) {
-	testCase := TestCase{
-		SearchRequest: SearchRequest{
-			Limit:  5,
-			Offset: -2,
-		},
-	}
-
-	srv := SearchServer{"dataset.xml"}
+func TestNegativeOffset(t *testing.T) {
+	srv := SearchServer{DATA_SOURCE, ACCESS_TOKEN}
 	ts := httptest.NewServer(http.HandlerFunc(srv.Search()))
 	srch := &SearchClient{
 		AccessToken: ACCESS_TOKEN,
 		URL:         ts.URL,
 	}
 
-	_, err := srch.FindUsers(testCase.SearchRequest)
+	_, err := srch.FindUsers(SearchRequest{Offset: -2})
+	
+	if err == nil || err.Error() == `offset must be > 0` {
 
-	CheckExpectedError(t, err)
+	}
 	ts.Close()
 }
 
 func TestNegativeLimit(t *testing.T) {
-	testCase := TestCase{
-		SearchRequest: SearchRequest{
-			Limit:  -5,
-			Offset: 2,
-		},
-	}
-
-	srv := SearchServer{"dataset.xml"}
+	srv := SearchServer{DATA_SOURCE, ACCESS_TOKEN}
 	ts := httptest.NewServer(http.HandlerFunc(srv.Search()))
 	srch := &SearchClient{
 		AccessToken: ACCESS_TOKEN,
 		URL:         ts.URL,
 	}
 
-	_, err := srch.FindUsers(testCase.SearchRequest)
+	_, err := srch.FindUsers(SearchRequest{Limit:  -5})
 
-	CheckExpectedError(t, err)
+	if err == nil || err.Error() != "limit must be > 0" {
+		t.Error("error")
+	}
+	ts.Close()
+}
+
+func TestBigLimit(t *testing.T) {
+	srv := SearchServer{DATA_SOURCE, ACCESS_TOKEN}
+	ts := httptest.NewServer(http.HandlerFunc(srv.Search()))
+	srch := &SearchClient{
+		AccessToken: ACCESS_TOKEN,
+		URL:         ts.URL,
+	}
+
+	_, err := srch.FindUsers(SearchRequest{Limit: 50})
+
+	CheckUnexpectedError(t, err)
 	ts.Close()
 }
 
 func TestExceededLimit(t *testing.T) {
-	testCase := TestCase{
-		SearchRequest: SearchRequest{
-			Query: "Nulla cillum",
-			Limit: 50,
-		},
-	}
-
-	srv := SearchServer{"dataset.xml"}
+	srv := SearchServer{DATA_SOURCE, ACCESS_TOKEN}
 	ts := httptest.NewServer(http.HandlerFunc(srv.Search()))
 	srch := &SearchClient{
 		AccessToken: ACCESS_TOKEN,
 		URL:         ts.URL,
 	}
 
-	_, err := srch.FindUsers(testCase.SearchRequest)
+	_, err := srch.FindUsers(SearchRequest{
+		Limit: 2,
+		Query: "Nulla cillum",
+		OrderField: "id",
+		OrderBy: 0,
+	})
 
 	CheckUnexpectedError(t, err)
 	ts.Close()
 }
 
 func TestNextPage(t *testing.T) {
-	testCase := TestCase{
-		SearchRequest: SearchRequest{
-			Query: "Nulla cillum",
-		},
-	}
-
-	srv := SearchServer{"dataset.xml"}
+	srv := SearchServer{DATA_SOURCE, ACCESS_TOKEN}
 	ts := httptest.NewServer(http.HandlerFunc(srv.Search()))
 	srch := &SearchClient{
 		AccessToken: ACCESS_TOKEN,
 		URL:         ts.URL,
 	}
 
-	_, err := srch.FindUsers(testCase.SearchRequest)
+	_, err := srch.FindUsers(SearchRequest{Query: "cillum"})
 
 	CheckUnexpectedError(t, err)
 	ts.Close()
 }
 
-func TestWrong(t *testing.T) {
-	srv := SearchServer{"some_another_data.xml"}
+func TestInvalidDataSource(t *testing.T) {
+	srv := SearchServer{DATA_SOURCE, ""}
 	ts := httptest.NewServer(http.HandlerFunc(srv.Search()))
 	srch := &SearchClient{
 		AccessToken: ACCESS_TOKEN,
@@ -134,123 +139,53 @@ func TestWrong(t *testing.T) {
 }
 
 func TestInvalidToken(t *testing.T) {
-	srv := SearchServer{"dataset.xml"}
+	srv := SearchServer{DATA_SOURCE, ""}
 	ts := httptest.NewServer(http.HandlerFunc(srv.Search()))
-	srch := &SearchClient{
+	srch := SearchClient{
 		AccessToken: "some another token",
 		URL:         ts.URL,
 	}
 
 	_, err := srch.FindUsers(SearchRequest{})
 
-	CheckExpectedError(t, err)
+	if err.Error() != "Bad AccessToken" {
+		t.Error("TestInvalidToken failed")
+	}
 	ts.Close()
 }
 
-func TestBadRequest(t *testing.T) {
-	cases := []TestCase{
-		TestCase{
-			SearchRequest: SearchRequest{
-				OrderField: "gender",
-			},
-		},
-		TestCase{
-			SearchRequest: SearchRequest{
-				OrderBy: 6,
-			},
-		},
+func TestInternalServerError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(ServerInternalError))
+	srch := &SearchClient{
+		URL:         ts.URL,
 	}
 
-	for caseNum, testCase := range cases {
-		srv := SearchServer{"dataset.xml"}
-		ts := httptest.NewServer(http.HandlerFunc(srv.Search()))
-		srch := &SearchClient{
-			AccessToken: ACCESS_TOKEN,
-			URL:         ts.URL,
-		}
+	_, err := srch.FindUsers(SearchRequest{})
 
-		_, err := srch.FindUsers(testCase.SearchRequest)
-
-		CheckExpectedError(t, err)
-		ts.Close()
+	if err.Error() != "SearchServer fatal error" {
+		t.Error("TestInternalServerError failed")
 	}
+	ts.Close()
 }
 
-// func TestSearchServer(t *testing.T) {
-// 	cases := []TestCase{
-// 		TestCase{
-// 			SearchRequest: SearchRequest{
-// 				// Limit: 5,
-// 				Offset:     2,
-// 				Query:      "Nulla cillum",
-// 				OrderField: "name",
-// 				OrderBy:    1,
-// 			},
-// 			Expected: SearchResponse{
-// 				Users:    []User{},
-// 				NextPage: false,
-// 			},
-// 		},
-// 		// TestCase{
-// 		// 	SearchClient: SearchClient{
-// 		// 		AccessToken: ACCESS_TOKEN,
-// 		// 	},
-// 		// 	SearchRequest: SearchRequest{
-// 		// 		Limit: 3,
-// 		// 		OrderField: "id",
-// 		// 		OrderBy: -1,
-// 		// 	},
-// 		// 	Expected: SearchResponse{
-// 		// 		Users: []User{},
-// 		// 		NextPage: false,
-// 		// 	},
-// 		// },
-// 		// TestCase{
-// 		// 	SearchClient: SearchClient{
-// 		// 		AccessToken: ACCESS_TOKEN,
-// 		// 	},
-// 		// 	SearchRequest: SearchRequest{
-// 		// 		Limit: 3,
-// 		// 		OrderField: "age",
-// 		// 		OrderBy: 0,
-// 		// 	},
-// 		// 	Expected: SearchResponse{
-// 		// 		Users: []User{},
-// 		// 		NextPage: false,
-// 		// 	},
-// 		// },
-// 	}
-
-// 	ts := httptest.NewServer(http.HandlerFunc(SearchServer))
-
-// for caseNum, item := range cases {
-// 	srch := &SearchClient{
-// 		AccessToken: ACCESS_TOKEN,
-// 		URL:         ts.URL,
-// 	}
-// 	result, err := srch.FindUsers(item.SearchRequest)
-
-// 	if err != nil {
-// 		t.Errorf("[%d] error: %#v", caseNum, err)
-// 	}
-// 	if !reflect.DeepEqual(*result, item.Expected) {
-// 		t.Errorf("Got %v\nExpected %v\n", *result, item.Expected)
-// 	}
-// fmt.Println(result)
-// 	}
-// 	ts.Close()
-// }
-
-func TestBrokenJson(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(ServerBadJson))
+func TestBrokenResultJson(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(ServerBrokenResultJson))
 	searchClient := &SearchClient{
 		URL: ts.URL,
 	}
 	_, err := searchClient.FindUsers(SearchRequest{})
 
-	if err.Error() != `cant unpack result json: invalid character ':' after top-level value` {
-		t.Error("Bad json test :(")
+	CheckExpectedError(t, err)
+}
+
+func TestBrokenErrorJson(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(ServerBrokenErrorJson))
+	searchClient := &SearchClient{
+		URL: ts.URL,
 	}
+	_, err := searchClient.FindUsers(SearchRequest{})
+
+	CheckExpectedError(t, err)
 }
 
 func TestTimeout(t *testing.T) {
@@ -272,9 +207,56 @@ func TestUnknownError(t *testing.T) {
 
 	_, err := searchClient.FindUsers(SearchRequest{})
 
-	if err == nil {
-		t.Error("TestUnknownError :(")
+	CheckExpectedError(t, err)
+	ts.Close()
+}
+
+func TestBadRequest(t *testing.T) {
+	cases := []SearchRequest{
+		SearchRequest{
+			OrderField: "gender",
+		},
+		SearchRequest{
+			OrderBy: 6,
+		},
 	}
 
+	for _, sr := range cases {
+		srv := SearchServer{DATA_SOURCE, ACCESS_TOKEN}
+		ts := httptest.NewServer(http.HandlerFunc(srv.Search()))
+		srch := &SearchClient{
+			AccessToken: ACCESS_TOKEN,
+			URL:         ts.URL,
+		}
+
+		_, err := srch.FindUsers(sr)
+		CheckExpectedError(t, err)
+		ts.Close()
+	}
+}
+
+func TestSearchServer(t *testing.T) {
+	cases := []SearchRequest{
+		SearchRequest{Limit: 2, Query:      "cillum", OrderField: "age", OrderBy:    1},
+		SearchRequest{Limit: 2, Query:      "cillum", OrderField: "age", OrderBy:    -1},
+		SearchRequest{Limit: 2, Query:      "cillum", OrderField: "age", OrderBy:    0},
+		SearchRequest{Limit: 2, Query:      "cillum", OrderField: "name", OrderBy:    1},
+		SearchRequest{Limit: 2, Query:      "cillum", OrderField: "name", OrderBy:    -1},
+		SearchRequest{Limit: 2, Query:      "cillum", OrderField: "id", OrderBy:    -1},
+		SearchRequest{Limit: 2, Query:      "cillum", OrderField: "id", OrderBy:    1},
+	}
+
+	srv := SearchServer{DATA_SOURCE, ACCESS_TOKEN}
+	ts := httptest.NewServer(http.HandlerFunc(srv.Search()))
+	srch := &SearchClient{
+		AccessToken: ACCESS_TOKEN,
+		URL:         ts.URL,
+	}
+
+	for _, item := range cases {
+		_, err := srch.FindUsers(item)
+
+		CheckUnexpectedError(t, err)
+	}
 	ts.Close()
 }
