@@ -1,22 +1,22 @@
 package main
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
-	"bytes"
 	"io"
 )
 
 type User struct {
-	ID int `xml:"id,attr"`
-	Login string `xml:"login"`
-	Name string `xml:"name"`
+	ID      int    `xml:"id,attr"`
+	Login   string `xml:"login"`
+	Name    string `xml:"name"`
 	Browser string `xml:"browser"`
 }
 
 type Users struct {
-    Version     string   `xml:"version,attr"`
-    List        []User   `xml:"user"`
+	Version string `xml:"version,attr"`
+	List    []User `xml:"user"`
 }
 
 var xmlData = []byte(`<?xml version="1.0" encoding="utf-8"?>
@@ -61,9 +61,9 @@ func CountStruct() {
 	logins := make([]string, 0)
 	v := new(Users)
 	err := xml.Unmarshal(xmlData, &v)
-    if err != nil {
-        fmt.Printf("error: %v", err)
-        return
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
 	}
 	for _, u := range v.List {
 		logins = append(logins, u.Login)
@@ -73,6 +73,7 @@ func CountStruct() {
 func CountDecoder() {
 	input := bytes.NewReader(xmlData)
 	decoder := xml.NewDecoder(input)
+	// json.NewDecoder(input)
 	logins := make([]string, 0)
 	var login string
 	for {
@@ -86,6 +87,7 @@ func CountDecoder() {
 		if tok == nil {
 			fmt.Println("t is nil break")
 		}
+
 		switch tok := tok.(type) {
 		case xml.StartElement:
 			if tok.Name.Local == "login" {

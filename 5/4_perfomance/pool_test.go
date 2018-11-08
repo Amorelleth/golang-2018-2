@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-const iterNum = 100
+const iterNum2 = 100
 
 type PublicPage struct {
 	ID          int
@@ -32,8 +32,8 @@ var CoolGolangPublic = PublicPage{
 }
 
 var Pages = []PublicPage{
-	CoolGolangPublic, 
-	CoolGolangPublic, 
+	CoolGolangPublic,
+	CoolGolangPublic,
 	CoolGolangPublic,
 }
 

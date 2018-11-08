@@ -5,15 +5,23 @@ import (
 	"reflect"
 )
 
+type Login string
+
 type User struct {
 	ID       int
 	RealName string `unpack:"-"`
-	Login    string
+	Login    Login
 	Flags    int
 }
 
 func PrintReflect(u interface{}) error {
-	val := reflect.ValueOf(u).Elem()
+	val := reflect.ValueOf(u)
+
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	fmt.Println(val.Type(), val.Kind())
 
 	fmt.Printf("%T have %d fields:\n", u, val.NumField())
 	for i := 0; i < val.NumField(); i++ {
@@ -21,7 +29,7 @@ func PrintReflect(u interface{}) error {
 		typeField := val.Type().Field(i)
 
 		fmt.Printf("\tname=%v, type=%v, value=%v, tag=`%v`\n", typeField.Name,
-			typeField.Type.Kind(),
+			typeField.Type,
 			valueField,
 			typeField.Tag,
 		)
@@ -30,7 +38,7 @@ func PrintReflect(u interface{}) error {
 }
 
 func main() {
-	u := &User{
+	u := User{
 		ID:       42,
 		RealName: "rvasily",
 		Flags:    32,
