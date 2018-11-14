@@ -8,9 +8,9 @@ import (
 )
 
 type User struct {
-	ID       int
-	RealName string `unpack:"-"`
 	Login    string
+	RealName string `unpack:"-" json:"real_name"`
+	ID       int
 	Flags    int
 }
 
@@ -50,14 +50,15 @@ func UnpackReflect(u interface{}, data []byte) error {
 
 func main() {
 	/*
-		perl -E '$b = pack("L L/a* L", 1_123_456, "v.romanov", 16);
+		perl -E '$b = pack("L L/a* L", 1_123_456, "d.dorofeev", 16);
 			print map { ord.", "  } split("", $b); '
 	*/
 	data := []byte{
-		128, 36, 17, 0,
 
-		9, 0, 0, 0,
-		118, 46, 114, 111, 109, 97, 110, 111, 118,
+		10, 0, 0, 0,
+		100, 46, 100, 111, 114, 111, 102, 101, 101, 118,
+
+		128, 36, 17, 0,
 
 		16, 0, 0, 0,
 	}
