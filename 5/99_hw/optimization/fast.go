@@ -84,9 +84,3 @@ func FastSearch(out io.Writer) {
 	fmt.Fprintln(out, "found users:\n"+foundUsers)
 	fmt.Fprintln(out, "Total unique browsers", len(uniqueBrowsers))
 }
-
-// убрать регулярки //
-// создать юзер а и убрать каст к типу
-// сделать юзеру обрезание
-// добавить break в циклах
-// изи жисон
