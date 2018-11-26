@@ -1,0 +1,32 @@
+<html>
+<head>
+    <style>
+        h3, h4 {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        img {
+            width: 900px;
+        }
+    </style>
+<body>
+    <ul>
+        <li><h3>Регулярные выражения - дорогая операция - нужно заменить их на поиск подстроки</h3></li>
+        <img src="img/regexp.png">
+        <img src="img/regexp time.png">
+        <li><h3>Для более быстрой распаковки json описать структуру User (только используемые поля), чтобы избавиться от приведения типов и воспользоваться easyjson</h3></li>
+        <img src="img/unmarshal.png">
+        <li><h3>ReadAll земенить ReadFile, так как нам нужно только содержимое файла</h3></li>
+        <img src="img/readall.png">
+        <img src="img/readall time.png">
+        <li><h3>Убрать приведение к строке, а потом обратно в слайс байт, Split по строке заменить на bytes.Split</h3></li>
+        <img src="img/slice string.png">
+        <li><h3>Установить capacity для слайсов, чтобы уменьшить количество аллокаций</h3></li>
+        <h4>SlowSearch</h4>
+        <img src="img/append slow.png">
+        <h4>FastSearch</h4>
+        <img src="img/append fast.png">
+        <li><h3>Объявлять переменные перед циклами, а не перед каждой итерацией</h3></li>
+    </ul>
+    
+</body>
+</html>
