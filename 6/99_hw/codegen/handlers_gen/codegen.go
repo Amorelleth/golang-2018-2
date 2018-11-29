@@ -45,8 +45,7 @@ func main() {
 
 	out, _ := os.Create(os.Args[2])
 
-	fmt.Fprintf(out, `
-// Code generated. DO NOT EDIT.
+	fmt.Fprintf(out, `// Code generated. DO NOT EDIT.
 
 package `+node.Name.Name+`
 
