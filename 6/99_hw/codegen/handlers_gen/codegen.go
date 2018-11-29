@@ -46,6 +46,8 @@ func main() {
 	out, _ := os.Create(os.Args[2])
 
 	fmt.Fprintf(out, `
+// Code generated. DO NOT EDIT.
+
 package `+node.Name.Name+`
 
 import (
@@ -53,21 +55,18 @@ import (
 	"fmt"
 	"encoding/json"
 	"strconv"
-	// "io/ioutil"
-	// "net/url"
 	"context"
 )
 
 type Result struct {
 `)
 	fmt.Fprintln(out, "    Response interface{} `json:\"response,omitempty\"`")
-	fmt.Fprintln(out, "    Err string `json:\"error\"`")
-	fmt.Fprintln(out, "}")
+	fmt.Fprintln(out, "    Err string           `json:\"error\"`")
+	fmt.Fprintln(out, `}
 
-	fmt.Fprintf(out, `
-func WriteResponse (w http.ResponseWriter, res Result, st int) {
+func WriteResponse (w http.ResponseWriter, res Result, status int) {
 	resp, _ := json.Marshal(res)
-	w.WriteHeader(st)
+	w.WriteHeader(status)
 	w.Write(resp)
 }
 `)
@@ -105,15 +104,14 @@ func WriteResponse (w http.ResponseWriter, res Result, st int) {
 				fmt.Fprintln(out, `    params := `+paramsType+`{}`)
 				fmt.Fprintln(out, `    err := params.GetParams(r)`)
 				fmt.Fprintln(out, `    if err.Err != nil {`)
-				fmt.Fprintln(out, `            WriteResponse(w, Result{Err: err.Error()}, err.HTTPStatus)`)
-				fmt.Fprintln(out, `            return`)
+				fmt.Fprintln(out, `        WriteResponse(w, Result{Err: err.Error()}, err.HTTPStatus)`)
+				fmt.Fprintln(out, `        return`)
 				fmt.Fprintln(out, `    }`)
 				fmt.Fprintln(out, `    err = params.ValidateParams(w, r)`)
 				fmt.Fprintln(out, `    if err.Err != nil {`)
-				fmt.Fprintln(out, `            WriteResponse(w, Result{Err: err.Error()}, err.HTTPStatus)`)
-				fmt.Fprintln(out, `            return`)
+				fmt.Fprintln(out, `        WriteResponse(w, Result{Err: err.Error()}, err.HTTPStatus)`)
+				fmt.Fprintln(out, `        return`)
 				fmt.Fprintln(out, `    }`)
-
 				fmt.Fprintln(out, `    ctx := context.Background()`)
 				fmt.Fprintln(out, `    res, e := h.`+name+`(ctx, params)`)
 				fmt.Fprintln(out, `    if e != nil {`)
@@ -122,9 +120,6 @@ func WriteResponse (w http.ResponseWriter, res Result, st int) {
 				fmt.Fprintln(out, `            WriteResponse(w, Result{Err: errApi.Error()}, errApi.HTTPStatus)`)
 				fmt.Fprintln(out, `            return`)
 				fmt.Fprintln(out, `        }`)
-				fmt.Fprintln(out, `    }`)
-				fmt.Fprintln(out, `    if e != nil {`)
-
 				fmt.Fprintln(out, `        WriteResponse(w, Result{Err: e.Error()}, 500)`)
 				fmt.Fprintln(out, `        return`)
 				fmt.Fprintln(out, `    }`)
@@ -159,19 +154,21 @@ func WriteResponse (w http.ResponseWriter, res Result, st int) {
 					if field.Tag == nil {
 						continue
 					}
+
 					needValidation = (needValidation || field.Tag != nil && strings.HasPrefix(field.Tag.Value, "`apivalidator:\""))
 					if needValidation {
-						vTag := reflect.StructTag(field.Tag.Value[1 : len(field.Tag.Value)-1]).Get("apivalidator")
-						parsed := parseValidationString(vTag)
-						name, ok := parsed["paramname"]
+						fName := field.Names[0].Name
+						vldTag := reflect.StructTag(field.Tag.Value[1 : len(field.Tag.Value)-1]).Get("apivalidator")
+						validators := parseValidationString(vldTag)
+						name, ok := validators["paramname"]
 
 						if !ok {
-							name = strings.ToLower(field.Names[0].Name)
+							name = strings.ToLower(fName)
 						}
 
-						required, ok := parsed["required"]
+						required, ok := validators["required"]
 						if ok && required == "required" {
-							vld += fmt.Sprintln(`    if p.`+field.Names[0].Name+` == "" {`)
+							vld += fmt.Sprintln(`    if p.`+fName+` == "" {`)
 							vld += fmt.Sprintln(`        return ApiError{400, fmt.Errorf("`+name+` must me not empty")}`)
 							vld += fmt.Sprintln(`    }`)
 						}
@@ -180,70 +177,70 @@ func WriteResponse (w http.ResponseWriter, res Result, st int) {
 							params += fmt.Sprintln(`    if err != nil {`)
 							params += fmt.Sprintln(`        return ApiError{400, fmt.Errorf("`+name+` must be int")}`)
 							params += fmt.Sprintln(`    }`)
-							params += fmt.Sprintln(`    p.`+field.Names[0].Name+` = name`)
+							params += fmt.Sprintln(`    p.`+fName+` = name`)
 
-							min, ok := parsed["min"]
+							min, ok := validators["min"]
 							if ok {
-								vld += fmt.Sprintln(`    if p.`+field.Names[0].Name+` < `+min+` {`)
+								vld += fmt.Sprintln(`    if p.`+fName+` < `+min+` {`)
 								vld += fmt.Sprintln(`        return ApiError{400, fmt.Errorf("`+name+` must be`+` >= `+min+`")}`)
 								vld += fmt.Sprintln(`    }`)
 							}
-							max, ok := parsed["max"]
+							max, ok := validators["max"]
 							if ok {
-								vld += fmt.Sprintln(`    if p.`+field.Names[0].Name+` > `+max+` {`)
+								vld += fmt.Sprintln(`    if p.`+fName+` > `+max+` {`)
 								vld += fmt.Sprintln(`        return ApiError{400, fmt.Errorf("`+name+` must be`+` <= `+max+`")}`)
 								vld += fmt.Sprintln(`    }`)
 							}
 						}
 
 						if field.Type.(*ast.Ident).Name == "string" {
-							params += fmt.Sprintln(`    p.`+field.Names[0].Name+` = `+`r.FormValue("`+name+`")`)
-							min, ok := parsed["min"]
+							params += fmt.Sprintln(`    p.`+fName+` = `+`r.FormValue("`+name+`")`)
+							min, ok := validators["min"]
 							if ok {
-								vld += fmt.Sprintln(`    if len(p.`+field.Names[0].Name+`) < `+min+` {`)
+								vld += fmt.Sprintln(`    if len(p.`+fName+`) < `+min+` {`)
 								vld += fmt.Sprintln(`        return ApiError{400, fmt.Errorf("`+name+` len must be`+` >= `+min+`")}`)
 								vld += fmt.Sprintln(`    }`)
 							}
-							max, ok := parsed["max"]
+							max, ok := validators["max"]
 							if ok {
-								vld += fmt.Sprintln(`    if len(p.`+field.Names[0].Name+`) > `+max+` {`)
+								vld += fmt.Sprintln(`    if len(p.`+fName+`) > `+max+` {`)
 								vld += fmt.Sprintln(`        return ApiError{400, fmt.Errorf("`+name+` len must be`+` <= `+max+`")}`)
 								vld += fmt.Sprintln(`    }`)
 							}
 						}
-						deflt, ok := parsed["default"]
+						deflt, ok := validators["default"]
 						if ok {
-							vld += fmt.Sprintln(`    if p.`+field.Names[0].Name+` == "" {`)
-							vld += fmt.Sprintln(` 	       p.`+field.Names[0].Name+` = "`+deflt+`"`)
+							vld += fmt.Sprintln(`    if p.`+fName+` == "" {`)
+							vld += fmt.Sprintln(`        p.`+fName+` = "`+deflt+`"`)
 							vld += fmt.Sprintln(`    }`)
 						}
-						enum, ok := parsed["enum"]
+						enum, ok := validators["enum"]
 						if ok {
 							enm := strings.Split(enum, "|")
-							vld += fmt.Sprintln(`    if `)
+							vld += fmt.Sprintf(`    if `)
 							for key, e := range enm {
-								vld += fmt.Sprintf(`p.` + field.Names[0].Name + ` != "` + e + `"`)
+								vld += fmt.Sprintf(`p.` + fName + ` != "` + e + `"`)
 								if key != len(enm)-1 {
 									vld += ` && `
 								}
 							}
-							vld += fmt.Sprintf(`{`)
+							vld += fmt.Sprintln(` {`)
 							vld += fmt.Sprintln(`        return ApiError{400, fmt.Errorf("`+name+` must be one of [`+strings.Join(enm, ", ")+`]")}`)
 							vld += fmt.Sprintln(`    }`)
 						}
 					}
 				}
-				fmt.Println(params, vld)
 				if needValidation {
 					fmt.Fprintln(out, `func (p *`+currType.Name.Name+`) GetParams(r *http.Request) ApiError {`)
-					fmt.Fprintln(out, params)
+					fmt.Fprintf(out, params)
 					fmt.Fprintln(out, `    return ApiError{Err: nil}`)
 					fmt.Fprintln(out, `}`)
-
+					fmt.Fprintln(out)
 					fmt.Fprintln(out, `func (p *`+currType.Name.Name+`) ValidateParams(w http.ResponseWriter, r *http.Request) ApiError {`)
-					fmt.Fprintln(out, vld)					
+					fmt.Fprintf(out, vld)					
 					fmt.Fprintln(out, `    return ApiError{200, nil}`)
 					fmt.Fprintln(out, `}`)
+					fmt.Fprintln(out)
 				}
 			}
 		default:
@@ -252,22 +249,21 @@ func WriteResponse (w http.ResponseWriter, res Result, st int) {
 	}
 
 	for key, rt := range rte {
-		fmt.Println(rt)
 		fmt.Fprintln(out, `func (h *`+key+`) ServeHTTP(w http.ResponseWriter, r *http.Request) {`)
 		fmt.Fprintln(out, `    switch r.URL.Path {`)
 		for _, r := range rt {
 			fmt.Fprintln(out, `    case "`+r.Format.Url+`": `)
 			if r.Format.HTTPMethod != "" {
-				fmt.Fprintln(out, `    if r.Method != "`+r.Format.HTTPMethod+`" {`)
-				fmt.Fprintln(out, `        WriteResponse(w, Result{Err: "bad method"}, 406)`)
-				fmt.Fprintln(out, `        return`)
-				fmt.Fprintln(out, `    }`)
+				fmt.Fprintln(out, `        if r.Method != "`+r.Format.HTTPMethod+`" {`)
+				fmt.Fprintln(out, `            WriteResponse(w, Result{Err: "bad method"}, 406)`)
+				fmt.Fprintln(out, `            return`)
+				fmt.Fprintln(out, `        }`)
 			}
 			if r.Format.Auth == true {
-				fmt.Fprintln(out, `    if r.Header.Get("X-Auth") != "100500" {`)
-				fmt.Fprintln(out, `        WriteResponse(w, Result{Err: "unauthorized"}, 403)`)
-				fmt.Fprintln(out, `        return`)
-				fmt.Fprintln(out, `    }`)
+				fmt.Fprintln(out, `        if r.Header.Get("X-Auth") != "100500" {`)
+				fmt.Fprintln(out, `            WriteResponse(w, Result{Err: "unauthorized"}, 403)`)
+				fmt.Fprintln(out, `            return`)
+				fmt.Fprintln(out, `        }`)
 			}
 			fmt.Fprintln(out, `        h.handle`+r.Func+`(w, r)`)
 		}
