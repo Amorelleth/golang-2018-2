@@ -16,7 +16,7 @@ func longSQLQuery() chan bool {
 
 func main() {
 	// при 1 выполнится таймаут, при 3 - выполнится операция
-	timer := time.NewTimer(3 * time.Second)
+	timer := time.NewTimer(5 * time.Second)
 	select {
 	case <-timer.C:
 		fmt.Println("timer.C timeout happend")

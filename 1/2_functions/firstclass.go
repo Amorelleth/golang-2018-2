@@ -9,15 +9,15 @@ func doNothing() {
 
 func main() {
 	// анонимная функция
-	func(in string) {
-		fmt.Println("anon func out:", in)
-	}("nobody")
+	// func(in string) {
+	// 	fmt.Println("anon func out:", in)
+	// }("nobody")
 
 	// присванивание анонимной функции в переменную
 	printer := func(in string) {
 		fmt.Println("printer outs:", in)
 	}
-	printer("as variable")
+	// printer("as variable")
 
 	// определяем тип функции
 	type strFuncType func(string)

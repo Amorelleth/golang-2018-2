@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
 	// значение по умолчанию
@@ -34,6 +36,11 @@ func main() {
 
 	// объявление нескольких переменных
 	var weight, height int = 10, 20
+
+	var (
+		w int
+		h int = 17
+	)
 
 	// присваивание в существующие переменные
 	weight, height = 11, 21

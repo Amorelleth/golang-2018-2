@@ -8,7 +8,7 @@ func getSomeVars() string {
 }
 
 func main() {
-	defer fmt.Println("After work")
+	defer fmt.Println(123)
 	defer func() {
 		fmt.Println(getSomeVars())
 	}()

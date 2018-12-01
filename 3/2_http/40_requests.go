@@ -102,6 +102,8 @@ func runTransportAndPost() {
 	}
 	defer resp.Body.Close() // важный пункт!
 
+	fmt.Println(resp.Header)
+
 	respBody, err := ioutil.ReadAll(resp.Body)
 
 	fmt.Printf("runTransport %#v\n\n\n", string(respBody))

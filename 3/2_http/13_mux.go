@@ -10,8 +10,29 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "URL:", r.URL.String())
 }
 
+func adminPage(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "ADMIN URL:", r.URL.String())
+}
+
+func adminPage2(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "ADMIN USER URL:", r.URL.String())
+}
+
 func main() {
+
+	adminPrefix := "admin"
+
+	admin := http.NewServeMux()
+	admin.HandleFunc("/user", adminPage2)
+	admin.HandleFunc("/", adminPage)
+
+	admninHandler := http.StripPrefix(
+		"/"+adminPrefix,
+		admin,
+	)
+
 	mux := http.NewServeMux()
+	mux.Handle("/admin/", admninHandler)
 	mux.HandleFunc("/", handler)
 
 	server := http.Server{

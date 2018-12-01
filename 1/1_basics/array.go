@@ -21,5 +21,5 @@ func main() {
 
 	// проверка при компиляции или при выполнении
 	// invalid array index 4 (out of bounds for 3-element array)
-	// a3[idx] = 12
+	a3[5] = 12
 }

@@ -4,7 +4,7 @@ import "fmt"
 
 func main() {
 	buf := []int{1, 2, 3, 4, 5}
-	fmt.Println(buf)
+	fmt.Println("initial", buf)
 
 	// получение среза, указывающего на ту же память
 	sl1 := buf[1:4] // [2, 3, 4]
@@ -16,6 +16,9 @@ func main() {
 	// buf = [9, 2, 3, 4, 5], т.к. та же память
 	newBuf[0] = 9
 
+	fmt.Println("initial 2", buf)
+	fmt.Println("newBuf", newBuf)
+
 	// newBuf теперь указывает на другие данные
 	newBuf = append(newBuf, 6)
 
@@ -24,6 +27,15 @@ func main() {
 	newBuf[0] = 1
 	fmt.Println("buf", buf)
 	fmt.Println("newBuf", newBuf)
+
+	b1 := make([]int, 5, 10)
+	b2 := b1[:]
+
+	fmt.Println(b1, b2)
+	b2 = append(b2, 2, 3)
+	b1 = append(b1, 1)
+
+	fmt.Println(b1, b2)
 
 	// копирование одного слайса в другой
 	var emptyBuf []int // len=0, cap=0

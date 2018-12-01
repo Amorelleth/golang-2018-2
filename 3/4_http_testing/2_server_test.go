@@ -59,7 +59,6 @@ func (c *Cart) Checkout(id string) (*CheckoutResult, error) {
 	}
 
 	result := &CheckoutResult{}
-
 	err = json.Unmarshal(data, result)
 	if err != nil {
 		return nil, err

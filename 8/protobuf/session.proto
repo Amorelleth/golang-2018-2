@@ -9,6 +9,8 @@ message SessionID {
 }
 
 message Session {
-  string login = 1;
-  string useragent = 2;
+  string login      = 1;
+  string useragent  = 2;
+  string useragent2 = 3;
+  string adress = 4;
 }
