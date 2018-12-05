@@ -17,7 +17,10 @@ func main() {
 	data := []byte(jsonStr)
 
 	u := &User{}
-	json.Unmarshal(data, u)
+	err := json.Unmarshal(data, u)
+	if err != nil {
+		panic(err)
+	}
 	fmt.Printf("struct:\n\t%#v\n\n", u)
 
 	u.phone = "987654321"

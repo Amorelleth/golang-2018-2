@@ -21,7 +21,7 @@ func namedReturn() (out int) {
 // несколько результатов
 func multipleReturn(in int) (int, error) {
 	if in > 2 {
-		return 0, fmt.Errorf("some error happend")
+		return 0, fmt.Errorf("some error happend %d", int)
 	}
 	return in, nil
 }
@@ -53,6 +53,8 @@ func main() {
 	// return
 
 	nums := []int{1, 2, 3, 4}
-	fmt.Println(nums, sum(nums...))
+	fmt.Println(nums, sum(1, 2, 3, 4, 5))
 	return
+
+	val, _ := multipleNamedReturn(false)
 }

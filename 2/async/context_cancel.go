@@ -7,33 +7,33 @@ import (
 	"time"
 )
 
-func worker(ctx context.Context, workerNum int, out chan<- int) {
+func студент(ctx context.Context, студентNum int, out chan<- int) {
 	waitTime := time.Duration(rand.Intn(100)+10) * time.Millisecond
-	fmt.Println(workerNum, "sleep", waitTime)
+	fmt.Println(студентNum, "sleep", waitTime)
 	select {
-	case <-end:
-		fmt.Println("worker", workerNum, "finished by ctx")
-		return
+	// case <-end:
+	// 	fmt.Println("студент", студентNum, "finished by ctx")
+	// 	return
 	case <-ctx.Done():
-		fmt.Println("worker", workerNum, "finished by ctx")
+		fmt.Println("студент", студентNum, "finished by ctx")
 		return
 	case <-time.After(waitTime):
-		fmt.Println("worker", workerNum, "done")
-		out <- workerNum
+		fmt.Println("студент", студентNum, "придумал вопрос")
+		out <- студентNum
 	}
 }
 
 func main() {
 	ctx, finish := context.WithCancel(context.Background())
 	result := make(chan int, 1)
-	end := make(chan int, 10)
+	// end := make(chan int, 10)
 
 	for i := 0; i <= 10; i++ {
-		go worker(ctx, i, result)
+		go студент(ctx, i, result)
 	}
 
 	foundBy := <-result
-	fmt.Println("result found by", foundBy)
+	fmt.Println("запрос задан", foundBy)
 	finish()
 
 	time.Sleep(time.Second)

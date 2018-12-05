@@ -10,6 +10,16 @@ type Handler struct {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	switch r.URL.String() {
+	case "/api/v1/messages":
+	case "/api/v1/messages/status":
+	case "/api/v1/messages/read":
+
+	case "/api/v1/messages/mark":
+
+	}
+
 	fmt.Fprintln(w, "Name:", h.Name, "URL:", r.URL.String())
 }
 

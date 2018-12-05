@@ -29,7 +29,15 @@ type Payer interface {
 	Pay(int) error
 }
 
+type MoneyBag interface {
+	Pay(int) error
+}
+
 // --------------
+
+func Pay2(mb MoneyBag) {
+	fmt.Println("ok!", mb)
+}
 
 func Buy(in interface{}) {
 	var p Payer
@@ -38,6 +46,8 @@ func Buy(in interface{}) {
 		fmt.Printf("%T не не является платежным средством\n\n", in)
 		return
 	}
+
+	Pay2(p)
 
 	err := p.Pay(10)
 	if err != nil {

@@ -15,6 +15,7 @@ func main() {
 			case dataCh <- val:
 				val++
 			case <-cancelCh:
+				// close(dataCh)
 				return
 			}
 		}
@@ -25,7 +26,7 @@ func main() {
 		if curVal > 3 {
 			fmt.Println("send cancel")
 			cancelCh <- struct{}{}
-			// break
+			break
 		}
 	}
 

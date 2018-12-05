@@ -8,6 +8,3 @@
     │   │   │   │───person.go
     │   │   │   └───func.go
     │   │   └───main.go
-    └───github.com
-        └───rvasily
-            └───examplerepo

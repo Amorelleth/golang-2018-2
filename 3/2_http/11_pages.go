@@ -15,7 +15,12 @@ func main() {
 			fmt.Fprintln(w, "Single page:", r.URL.String())
 		})
 
-	http.HandleFunc("/pages/",
+	http.HandleFunc("/collection/test",
+		func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintln(w, "Single page collection:", r.URL.String())
+		})
+
+	http.HandleFunc("/collection/",
 		func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "Multiple pages:", r.URL.String())
 		})

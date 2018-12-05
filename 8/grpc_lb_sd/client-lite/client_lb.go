@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	consulAddr = flag.String("addr", "192.168.99.100:32769", "consul addr (8500 in original consul)")
+	consulAddr = flag.String("addr", "192.168.99.100:32778", "consul addr (8500 in original consul)")
 )
 
 var (
