@@ -74,7 +74,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/", "/?":
 		h.handleTablesList(w, r)
 	default:
-		WriteResponse(w, Result{Err: "fatalError"}, 500)
+		WriteResponse(w, Result{Err: "unknown path"}, 404)
 		return
 	}
 }
@@ -146,10 +146,14 @@ func (h *Handler) handleTableRequest(w http.ResponseWriter, r *http.Request) {
 			fields[i] = "`" + field.Name + "`"
 			vals[i] = "?"
 		}
-		res, _ := h.DB.Exec(
+		res, err := h.DB.Exec(
 			fmt.Sprintf("insert into `%s` (%s) values (%s)", tn, strings.Join(fields, ", "), strings.Join(vals, ", ")),
 			valsToInsert...,
 		)
+		if err != nil {
+			WriteResponse(w, Result{}, 500)
+			return
+		}
 
 		id, _ := res.LastInsertId()
 		WriteResponse(w, Result{Resp: map[string]interface{}{table.PrimaryKey.Name: id}}, 200)
@@ -210,12 +214,20 @@ func (h *Handler) handleTableIdRequest(w http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf("update `%s` set %s where `%s` = ? ", tn, strings.Join(fields, ", "), table.PrimaryKey.Name),
 			rowsToUpdate...,
 		)
+		if err != nil {
+			WriteResponse(w, Result{}, 500)
+			return
+		}
 
 		rowsAffected, _ := res.RowsAffected()
 		WriteResponse(w, Result{Resp: map[string]interface{}{"updated": rowsAffected}}, 200)
 		return
 	case "DELETE":
-		res, _ := h.DB.Exec(fmt.Sprintf("delete from `%s` where `%s` = ? ", tn, table.PrimaryKey.Name), id)
+		res, err := h.DB.Exec(fmt.Sprintf("delete from `%s` where `%s` = ? ", tn, table.PrimaryKey.Name), id)
+		if err != nil {
+			WriteResponse(w, Result{}, 500)
+			return
+		}
 		rowsAffected, _ := res.RowsAffected()
 
 		WriteResponse(w, Result{Resp: map[string]interface{}{"deleted": rowsAffected}}, 200)
