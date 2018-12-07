@@ -58,7 +58,7 @@ func WriteResponse(w http.ResponseWriter, res Result, status int) {
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Path
-	ti, _ := regexp.MatchString(`^\/\w+\/[0-9]+($|\/?\??)`, url)
+	ti, _ := regexp.MatchString(`^\/\w+\/\d+($|\/?\??)`, url)
 	if ti {
 		h.handleTableIdRequest(w, r)
 		return
@@ -200,7 +200,7 @@ func (h *Handler) handleTableIdRequest(w http.ResponseWriter, r *http.Request) {
 				WriteResponse(w, Result{Err: "field " + p + " have invalid type"}, 400)
 				return
 			}
-			fields = append(fields, fmt.Sprintf("%s = ?", p))
+			fields = append(fields, fmt.Sprintf("`%s` = ?", p))
 		}
 
 		rowsToUpdate := make([]interface{}, 0)
@@ -208,8 +208,8 @@ func (h *Handler) handleTableIdRequest(w http.ResponseWriter, r *http.Request) {
 			rowsToUpdate = append(rowsToUpdate, p)
 		}
 
-		res, _ := h.DB.Exec(
-			fmt.Sprintf("update %s set %s where %s = %s ", tn, strings.Join(fields, ","), table.PrimaryKey.Name, id),
+		res, err := h.DB.Exec(
+			fmt.Sprintf("update `%s` set %s where `%s` = %s ", tn, strings.Join(fields, ", "), table.PrimaryKey.Name, id),
 			rowsToUpdate...,
 		)
 
@@ -217,7 +217,7 @@ func (h *Handler) handleTableIdRequest(w http.ResponseWriter, r *http.Request) {
 		WriteResponse(w, Result{Resp: map[string]interface{}{"updated": rowsAffected}}, 200)
 		return
 	case "DELETE":
-		res, _ := h.DB.Exec(fmt.Sprintf("delete from %s where %s = %s ", tn, table.PrimaryKey.Name, id))
+		res, _ := h.DB.Exec(fmt.Sprintf("delete from `%s` where `%s` = %s ", tn, table.PrimaryKey.Name, id))
 		rowsAffected, _ := res.RowsAffected()
 
 		WriteResponse(w, Result{Resp: map[string]interface{}{"deleted": rowsAffected}}, 200)
