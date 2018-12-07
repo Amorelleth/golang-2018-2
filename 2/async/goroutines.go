@@ -17,6 +17,7 @@ func doIT(th int) {
 		fmt.Printf(formatWork(th, j))
 		time.Sleep(time.Millisecond)
 	}
+	return 1
 }
 
 func main() {

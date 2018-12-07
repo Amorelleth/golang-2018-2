@@ -21,7 +21,7 @@ func main() {
 		"id":       42,
 		"username": "rvasily",
 	}
-	var user2i interface{} = user2
-	result, _ := json.Marshal(user2i)
+	// var user2i interface{} = user2
+	result, _ := json.Marshal(user2)
 	fmt.Printf("json string from map:\n %s\n", string(result))
 }

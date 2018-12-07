@@ -28,7 +28,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 
 	items := []*Item{}
 
-	rows, err := h.DB.Query("SELECT id, title, updated FROM items")
+	rows, err := h.DB.Query("SELECT id, title, updated FROM items LIMIT ? OFFSET ?", limit, offset)
 	__err_panic(err)
 	for rows.Next() {
 		post := &Item{}
@@ -59,6 +59,7 @@ func (h *Handler) AddForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Add(w http.ResponseWriter, r *http.Request) {
+
 	// в целям упрощения примера пропущена валидация
 	result, err := h.DB.Exec(
 		"INSERT INTO items (`title`, `description`) VALUES (?, ?)",

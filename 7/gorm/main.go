@@ -37,7 +37,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 
 	items := []*Item{}
 
-	db := h.DB.Find(&items)
+	db := h.DB.Select("id, updated").Find(&items)
 	err := db.Error
 	__err_panic(err)
 
@@ -83,7 +83,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 
 	post := &Item{}
 
-	db := h.DB.Find(post, id)
+	db := h.DB.Find(post)
 	err = db.Error
 	if err == gorm.ErrRecordNotFound {
 		fmt.Println("Record not found", id)

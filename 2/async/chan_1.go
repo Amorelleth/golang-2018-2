@@ -1,7 +1,8 @@
 package main
 
 import "fmt"
-import "time"
+
+// import "time"
 
 func MyFunc(in chan int) {
 	fmt.Println("GO: before read from chan")
@@ -15,9 +16,8 @@ func main() {
 
 	go MyFunc(ch1)
 
-	time.Sleep(10 * time.Millisecond)
-
 	ch1 <- 42
+	ch1 <- 100500
 	ch1 <- 100500
 
 	fmt.Println("MAIN: after put to chan")

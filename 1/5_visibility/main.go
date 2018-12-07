@@ -1,8 +1,8 @@
 package main
 
 import (
-	"golang-2018-2/1/5_visibility/person"
 	"fmt"
+	"golang-2018-2/1/5_visibility/person"
 )
 
 func main() {

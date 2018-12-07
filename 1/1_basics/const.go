@@ -30,5 +30,5 @@ func main() {
 	fmt.Println(month + year)
 
 	// month + yearTyped (mismatched types int32 and int)
-	// fmt.Println( month + yearTyped )
+	fmt.Println(month + int32(yearTyped))
 }

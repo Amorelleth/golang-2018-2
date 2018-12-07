@@ -23,9 +23,9 @@ type Account struct {
 	Person
 }
 
-func (p *Account) SetName(name string) {
-	p.Name = name
-}
+// func (p *Account) SetName(name string) {
+// 	p.Name = name
+// }
 
 type MySlice []int
 
@@ -56,7 +56,9 @@ func main() {
 	acc.SetName("romanov.vasily")
 	acc.Person.SetName("Test")
 
-	// fmt.Printf("%#v \n", acc)
+	fmt.Printf("%#v \n", acc)
+
+	return
 
 	sl := MySlice([]int{1, 2})
 	sl.Add(5)

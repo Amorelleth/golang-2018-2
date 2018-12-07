@@ -6,7 +6,7 @@ import (
 )
 
 type User struct {
-	ID       int `json:"user_id,string"`
+	ID       int `json:"user_id,omitempty,string"`
 	Username string
 	Address  string `json:",omitempty"`
 	Comnpany string `json:"-"`
@@ -14,9 +14,9 @@ type User struct {
 
 func main() {
 	u := &User{
-		ID:       42,
+		ID:       1,
 		Username: "rvasily",
-		Address:  "test",
+		Address:  "",
 		Comnpany: "Mail.Ru Group",
 	}
 	result, _ := json.Marshal(u)

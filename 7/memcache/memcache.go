@@ -9,7 +9,7 @@ func main() {
 	MemcachedAddresses := []string{"127.0.0.1:11211"}
 	memcacheClient := memcache.New(MemcachedAddresses...)
 
-	mkey := "coursera"
+	mkey := "habrTag"
 
 	memcacheClient.Set(&memcache.Item{
 		Key:        mkey,

@@ -7,7 +7,7 @@ import (
 
 func main() {
 	// пустая строка по-умолчанию
-	var str string
+	var str string = ""
 
 	// со спец символами
 	var hello string = "Привет\n\t"

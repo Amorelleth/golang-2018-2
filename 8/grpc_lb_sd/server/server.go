@@ -15,12 +15,12 @@ import (
 
 var (
 	grpcPort   = flag.Int("grpc", 8081, "listen addr")
-	consulAddr = flag.String("consul", "192.168.99.100:32769", "consul addr (8500 in original consul)")
+	consulAddr = flag.String("consul", "192.168.99.100:32778", "consul addr (8500 in original consul)")
 )
 
 /*
-	go run *.go --grpc="8081" --consul="192.168.99.100:32769"
-	go run *.go --grpc="8082" --consul="192.168.99.100:32769"
+	go run *.go --grpc="8081" --consul="192.168.99.100:32778"
+	go run *.go --grpc="8082" --consul="192.168.99.100:32778"
 */
 
 func main() {

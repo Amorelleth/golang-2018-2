@@ -9,16 +9,24 @@ func main() {
 		"lastName": "Romanov",
 	}
 
+	// var user map[string]string
+	// var user map[string]string = map[string]string{}
+	// var user = map[string]string{}
+	// user := map[string]string{}
+	// user := make(map[string]string)
+	// user := make(map[string]string, 10)
+
 	// сразу с нужной ёмкостью
-	profile := make(map[string]string, 10)
+	// profile := make(map[string]string, 10)
 
 	// количество элементов
 	mapLength := len(user)
 
-	fmt.Printf("%d %+v\n", mapLength, profile)
+	fmt.Printf("%d %+v\n", mapLength, user)
 
 	// если ключа нет - вернёт значение по умолчанию для типа
-	mName := user["middleName"]
+	kk := "middleName"
+	mName := user[kk]
 	fmt.Println("mName:", mName)
 
 	// проверка на существование ключа
