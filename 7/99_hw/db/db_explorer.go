@@ -143,12 +143,11 @@ func (h *Handler) handleTableRequest(w http.ResponseWriter, r *http.Request) {
 		vals := make([]string, len(table.Fields))
 
 		for i, field := range table.Fields {
-			fields[i] = field.Name
+			fields[i] = "`" + field.Name + "`"
 			vals[i] = "?"
 		}
-
 		res, _ := h.DB.Exec(
-			fmt.Sprintf("insert into %s (%s) values (%s)", tn, strings.Join(fields, ", "), strings.Join(vals, ", ")),
+			fmt.Sprintf("insert into `%s` (%s) values (%s)", tn, strings.Join(fields, ", "), strings.Join(vals, ", ")),
 			valsToInsert...,
 		)
 
@@ -170,7 +169,7 @@ func (h *Handler) handleTableIdRequest(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		row := h.DB.QueryRow("select * from `" + tn + "` where " + h.Tables[tn].PrimaryKey.Name + " = " + id)
+		row := h.DB.QueryRow("select * from `"+tn+"` where "+h.Tables[tn].PrimaryKey.Name+" = ?", id)
 		rfmt := table.FormatRows()
 		err := row.Scan(rfmt...)
 
@@ -195,21 +194,20 @@ func (h *Handler) handleTableIdRequest(w http.ResponseWriter, r *http.Request) {
 		}
 
 		fields := make([]string, 0)
-		for p := range params {
-			if p == table.PrimaryKey.Name {
-				WriteResponse(w, Result{Err: "field " + p + " have invalid type"}, 400)
+		rowsToUpdate := make([]interface{}, 0)
+
+		for k, p := range params {
+			if k == table.PrimaryKey.Name {
+				WriteResponse(w, Result{Err: "field " + k + " have invalid type"}, 400)
 				return
 			}
-			fields = append(fields, fmt.Sprintf("`%s` = ?", p))
-		}
-
-		rowsToUpdate := make([]interface{}, 0)
-		for _, p := range params {
+			fields = append(fields, fmt.Sprintf("`%s` = ?", k))
 			rowsToUpdate = append(rowsToUpdate, p)
 		}
 
+		rowsToUpdate = append(rowsToUpdate, id)
 		res, err := h.DB.Exec(
-			fmt.Sprintf("update `%s` set %s where `%s` = %s ", tn, strings.Join(fields, ", "), table.PrimaryKey.Name, id),
+			fmt.Sprintf("update `%s` set %s where `%s` = ? ", tn, strings.Join(fields, ", "), table.PrimaryKey.Name),
 			rowsToUpdate...,
 		)
 
@@ -217,7 +215,7 @@ func (h *Handler) handleTableIdRequest(w http.ResponseWriter, r *http.Request) {
 		WriteResponse(w, Result{Resp: map[string]interface{}{"updated": rowsAffected}}, 200)
 		return
 	case "DELETE":
-		res, _ := h.DB.Exec(fmt.Sprintf("delete from `%s` where `%s` = %s ", tn, table.PrimaryKey.Name, id))
+		res, _ := h.DB.Exec(fmt.Sprintf("delete from `%s` where `%s` = ? ", tn, table.PrimaryKey.Name), id)
 		rowsAffected, _ := res.RowsAffected()
 
 		WriteResponse(w, Result{Resp: map[string]interface{}{"deleted": rowsAffected}}, 200)
