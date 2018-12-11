@@ -25,9 +25,13 @@ func (fi *FI) Less(i, j int) bool {
 
 func printDir(out io.Writer, path string, print bool, prefix string) error {
 	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+
 	res, err := file.Readdir(0)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	fi := FI{res}
@@ -80,6 +84,9 @@ func printDir(out io.Writer, path string, print bool, prefix string) error {
 }
 
 func dirTree(out io.Writer, path string, print bool) error {
-	printDir(out, path, print, "")
+	err := printDir(out, path, print, "")
+	if err := nil {
+		return err
+	}
 	return nil
 }
