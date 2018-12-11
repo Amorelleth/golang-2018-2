@@ -113,7 +113,11 @@ func (h *Handler) handleTableRequest(w http.ResponseWriter, r *http.Request) {
 			offset = h.DefaultOffset
 		}
 
-		rows, _ := h.DB.Query("select * from `" + tn + "` limit " + limit + " offset " + offset)
+		rows, err := h.DB.Query(fmt.Sprintf("select * from `%s` limit ? offset ?", tn), limit, offset)
+		if err != nil {
+			WriteResponse(w, Result{}, 500)
+			return
+		}
 		resp := []interface{}{}
 		for rows.Next() {
 			table := h.Tables[tn]
@@ -143,7 +147,7 @@ func (h *Handler) handleTableRequest(w http.ResponseWriter, r *http.Request) {
 		vals := make([]string, len(table.Fields))
 
 		for i, field := range table.Fields {
-			fields[i] = "`" + field.Name + "`"
+			fields[i] = fmt.Sprintf("`%s`", field.Name)
 			vals[i] = "?"
 		}
 		res, err := h.DB.Exec(
@@ -173,7 +177,7 @@ func (h *Handler) handleTableIdRequest(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		row := h.DB.QueryRow("select * from `"+tn+"` where "+h.Tables[tn].PrimaryKey.Name+" = ?", id)
+		row := h.DB.QueryRow(fmt.Sprintf("select * from `%s` where `%s` = ?", tn, h.Tables[tn].PrimaryKey.Name), id)
 		rfmt := table.FormatRows()
 		err := row.Scan(rfmt...)
 
