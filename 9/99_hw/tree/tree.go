@@ -85,7 +85,7 @@ func printDir(out io.Writer, path string, print bool, prefix string) error {
 
 func dirTree(out io.Writer, path string, print bool) error {
 	err := printDir(out, path, print, "")
-	if err := nil {
+	if err != nil {
 		return err
 	}
 	return nil
